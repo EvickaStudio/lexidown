@@ -14,7 +14,13 @@ class FirecrawlPreset(unittest.TestCase):
             '<p>Before <a href="/a"> Alpha </a> between <a href="/b"> Beta </a> after.</p>': (
                 "Before [Alpha](</a>)\n between [Beta](</b>)\n after."
             ),
-            '<a href=" /path " title="a &quot;quote&quot;">Label</a>': '[Label](</path "a "quote"">)',
+            '<a href="/page" title="Title">text</a>': '[text](</page> "Title")',
+            '<a href=" /path " title="a &quot;quote&quot;">Label</a>': (
+                r'[Label](</path> "a \"quote\"")'
+            ),
+            r'<a href="/path" title="a\&quot;b\">Label</a>': (
+                r'[Label](</path> "a\\\"b\\")'
+            ),
             '<a href=" ">X</a>': "[X](<>)",
             '<a href="/x"></a>': "[](</x>)",
             '<p><a>No href</a> <a href="">Empty href</a></p>': "No href Empty href",

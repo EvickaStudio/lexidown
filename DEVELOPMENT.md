@@ -154,7 +154,12 @@ and runs the full suite against each installed wheel outside the source tree.
 `scripts/check_wheel.py` also verifies that the compiled extension and required
 license notices are installed. Wheel tests need html5lib, but no Node.js.
 
-The workflow configures standard CPython 3.10–3.14 for these targets:
+Pull requests, pushes to `dev`, and manual runs build and test Linux wheels on
+CPython 3.10 and 3.14, with JavaScript comparisons on 3.14. Only dependency
+downloads are cached; project wheels are rebuilt from the source archive.
+
+Pushes to `main` run the full release build, configuring standard CPython
+3.10–3.14 for these targets:
 
 | Platform | Architectures | Build baseline |
 | --- | --- | --- |

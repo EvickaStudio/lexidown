@@ -3,6 +3,7 @@
   "private": true,
   "description": "Optional JavaScript reference for Lexidown compatibility tests and benchmarks",
   "devDependencies": {
+    "@joplin/turndown-plugin-gfm": "1.0.68",
     "@mixmark-io/domino": "2.2.0",
     "turndown": "7.2.4"
   }

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lexidown"
-version = "0.1.1"
+version = "0.2.0"
 description = "Fast native HTML-to-Markdown for Python, compatible with Turndown"
 readme = "README.md"
 requires-python = ">=3.10"

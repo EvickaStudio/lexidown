@@ -1,0 +1,13 @@
+{
+  "html": "<!doctype html><html><head><title>Page title</title><meta name=\"description\" content=\"Summary\"></head><body><h1>Heading</h1><p>Hello <em>world</em>. <a href=\"/docs\">Docs</a>.</p><script>script_marker()</script><style>.style_marker{color:red}</style><table><tr><th>Name</th><th>Value</th></tr><tr><td>A</td><td>1</td></tr></table><pre><code class=\"language-python\">print(\"hi\")\n</code></pre></body></html>",
+  "outputs": {
+    "python": "Page title\n\nHeading\n=======\n\nHello _world_. [Docs](/docs).\n\nscript\\_marker().style\\_marker{color:red}\n\nName\n\nValue\n\nA\n\n1\n\n    print(\"hi\")",
+    "html2text": "# Heading\n\nHello _world_. [Docs](/docs).\n\nName| Value  \n---|---  \nA| 1  \n      \n    \n    print(\"hi\")\n    \n\n",
+    "markdownify": "Page title\n\nHeading\n=======\n\nHello *world*. [Docs](/docs).\n\n| Name | Value |\n| --- | --- |\n| A | 1 |\n\n```\nprint(\"hi\")\n```",
+    "markdownify-lxml": "Page title\n\nHeading\n=======\n\nHello *world*. [Docs](/docs).\n\n| Name | Value |\n| --- | --- |\n| A | 1 |\n\n```\nprint(\"hi\")\n```",
+    "html-to-markdown": "---\nmeta-description: Summary\ntitle: Page title\n---\n\n# Heading\n\nHello *world*. [Docs](/docs).\n\n| Name | Value |\n| ---- | ----- |\n| A    | 1     |\n\n```python\nprint(\"hi\")\n```\n",
+    "html-to-markdown-no-metadata": "# Heading\n\nHello *world*. [Docs](/docs).\n\n| Name | Value |\n| ---- | ----- |\n| A    | 1     |\n\n```python\nprint(\"hi\")\n```\n",
+    "fast-h2m": "---\nmeta-description: Summary\ntitle: Page title\n---\n\n# Heading\n\nHello *world*. [Docs](/docs).\n\n  \n\n| Name | Value |\n| ---- | ----- |\n| A    | 1     |\n\n```python\nprint(\"hi\")\n```\n",
+    "javascript": "Page title\n\nHeading\n=======\n\nHello _world_. [Docs](/docs).\n\nscript\\_marker().style\\_marker{color:red}\n\nName\n\nValue\n\nA\n\n1\n\n    print(\"hi\")"
+  }
+}

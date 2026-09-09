@@ -1,0 +1,9 @@
+{
+  "name": "lexidown-reference-tests",
+  "private": true,
+  "description": "Optional JavaScript reference for Lexidown compatibility tests and benchmarks",
+  "devDependencies": {
+    "@mixmark-io/domino": "2.2.0",
+    "turndown": "7.2.4"
+  }
+}

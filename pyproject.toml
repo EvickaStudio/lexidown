@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=77", "Cython==3.3.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lexidown"
+version = "0.1.0"
+description = "Fast native HTML-to-Markdown for Python, compatible with Turndown"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT AND Apache-2.0 AND BSD-2-Clause"
+license-files = [
+    "LICENSE",
+    "vendor/lexbor/LICENSE",
+    "vendor/lexbor/NOTICE",
+    "vendor/lexbor/BSD-LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+]
+dependencies = []
+keywords = ["html", "markdown", "turndown", "lexbor"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Cython",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+
+[project.optional-dependencies]
+dev = ["Cython==3.3.0", "html5lib==1.1", "ruff==0.16.6"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+src = ["src"]
+extend-exclude = ["vendor/**"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # Pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "PIE", # flake8-pie
+    "RUF", # Ruff-specific checks
+]
+ignore = ["E501"]  # The formatter handles wrapping; long literals may stay intact.
+
+[tool.ruff.lint.isort]
+known-first-party = ["lexidown"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true

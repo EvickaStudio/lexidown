@@ -1,0 +1,7 @@
+include DEVELOPMENT.md package.json package-lock.json
+recursive-include tests *.py *.json
+recursive-include examples *.py
+recursive-include scripts *.py *.cjs
+recursive-include benchmarks *.md *.json *.txt
+recursive-include src/lexidown *.pyx *.pxi *.pxd
+recursive-include vendor/lexbor *.c *.h LICENSE BSD-LICENSE NOTICE version README.md

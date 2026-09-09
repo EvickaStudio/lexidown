@@ -1,0 +1,10 @@
+# Benchmark competitors only; not Lexidown runtime dependencies.
+beautifulsoup4==4.15.0
+fast-h2m==0.4.2
+html-to-markdown==3.12.2
+html2text==2025.4.15
+lxml==6.1.3
+markdownify==1.2.3
+six==1.17.0
+soupsieve==2.9.2
+typing_extensions==4.16.0

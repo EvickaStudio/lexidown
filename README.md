@@ -2,6 +2,12 @@
 
 **Fast native HTML-to-Markdown for Python, compatible with Turndown.**
 
+[![PyPI version](https://badge.fury.io/py/lexidown.svg)](https://badge.fury.io/py/lexidown)
+[![Downloads](https://pepy.tech/badge/lexidown)](https://pepy.tech/project/lexidown)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/lexidown.svg)](https://pypi.org/project/lexidown/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+
 Lexidown brings [Turndown](https://github.com/mixmark-io/turndown)'s conversion
 behavior, options, and extensible service API to Python. Its Cython conversion
 engine and bundled Lexbor C parser require no runtime dependencies.

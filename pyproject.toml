@@ -4,10 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lexidown"
-version = "0.1.0"
+version = "0.1.1"
 description = "Fast native HTML-to-Markdown for Python, compatible with Turndown"
 readme = "README.md"
 requires-python = ">=3.10"
+authors = [
+    { name = "EvickaStudio", email = "hello@evicka.de" },
+]
 license = "MIT AND Apache-2.0 AND BSD-2-Clause"
 license-files = [
     "LICENSE",
@@ -17,9 +20,19 @@ license-files = [
     "THIRD_PARTY_NOTICES.md",
 ]
 dependencies = []
-keywords = ["html", "markdown", "turndown", "lexbor"]
+keywords = [
+    "html",
+    "markdown",
+    "turndown",
+    "lexbor",
+    "html-to-markdown",
+    "commonmark",
+    "converter",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -28,8 +41,17 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Cython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: HTML",
     "Topic :: Text Processing :: Markup :: Markdown",
 ]
+
+[project.urls]
+Homepage = "https://github.com/EvickaStudio/lexidown"
+Repository = "https://github.com/EvickaStudio/lexidown"
+Issues = "https://github.com/EvickaStudio/lexidown/issues"
+Documentation = "https://github.com/EvickaStudio/lexidown"
+Changelog = "https://github.com/EvickaStudio/lexidown/releases"
 
 [project.optional-dependencies]
 dev = ["Cython==3.3.0", "html5lib==1.1", "ruff==0.16.6"]

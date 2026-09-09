@@ -18,6 +18,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def corpus():
+    gfm_fixtures = json.loads((ROOT / "tests/fixtures/joplin_gfm.json").read_text())
+    for case in gfm_fixtures["cases"]:
+        for mode in ("string", "element"):
+            yield {**case, "mode": mode}
     fixtures = json.loads((ROOT / "tests/fixtures/turndown.json").read_text())
     for case in fixtures:
         for mode in ("string", "element"):
@@ -370,6 +374,16 @@ def corpus():
 
 def python_result(request):
     service = TurndownService(request.get("options"))
+    if request.get("plugin"):
+        from lexidown.plugins import joplin_gfm
+
+        if request.get("isCodeBlock"):
+            service.isCodeBlock = lambda node: (
+                node.nodeName == "PRE"
+                and node.firstChild is not None
+                and node.firstChild.nodeName == "CODE"
+            )
+        service.use(getattr(joplin_gfm, request["plugin"]))
     if "keep" in request:
         service.keep(request["keep"])
     if "remove" in request:

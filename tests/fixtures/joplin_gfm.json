@@ -1,0 +1,383 @@
+{
+  "metadata": {
+    "package": "@joplin/turndown-plugin-gfm",
+    "version": "1.0.68",
+    "tarball": "https://registry.npmjs.org/@joplin/turndown-plugin-gfm/-/turndown-plugin-gfm-1.0.68.tgz",
+    "source": "lib/turndown-plugin-gfm.cjs.js",
+    "source_sha256": "6406c82dff8fb44042be5032f2a8ead9a7d6d63a1f4482a9e7e6bd24e5fefff8",
+    "turndown": "7.2.4",
+    "domino": "2.2.0",
+    "generation": "Each expected value was produced by new TurndownService(options).use(plugin[case.plugin]).turndown(case.html). isCodeBlock cases first install the PRE/CODE predicate documented in test_gfm.py. No JavaScript is required to run the Python tests."
+  },
+  "cases": [
+    {
+      "name": "all plugins together",
+      "plugin": "gfm",
+      "html": "<p><del>old</del> new</p><div class=\"highlight-source-python\"><pre>print(1)</pre></div><table><tr><th>Name</th><th>Value</th></tr><tr><td>a</td><td>b</td></tr></table><ul><li><input type=\"checkbox\" checked>done</li></ul>",
+      "options": {},
+      "expected": "~~old~~ new\n\n```python\nprint(1)\n```\n\n| Name | Value |\n| --- | --- |\n| a   | b   |\n\n*   [x] done"
+    },
+    {
+      "name": "all strikethrough tags",
+      "plugin": "strikethrough",
+      "html": "<p><del>one</del> <s>two</s> <strike>three</strike></p>",
+      "options": {},
+      "expected": "~~one~~ ~~two~~ ~~three~~"
+    },
+    {
+      "name": "strikethrough whitespace and nested emphasis",
+      "plugin": "strikethrough",
+      "html": "<p>a<del> <strong>bold</strong> </del>b <s></s></p>",
+      "options": {},
+      "expected": "a ~~**bold**~~ b"
+    },
+    {
+      "name": "highlight source code",
+      "plugin": "highlightedCodeBlock",
+      "html": "<div class=\"highlight-source-python\"><pre>def main():\n    return 1</pre></div>",
+      "options": {},
+      "expected": "```python\ndef main():\n    return 1\n```"
+    },
+    {
+      "name": "highlight text code and custom fence",
+      "plugin": "highlightedCodeBlock",
+      "html": "<div class=\"example highlight-text-html extra\"><pre>&lt;h1&gt;x&lt;/h1&gt;\n</pre></div>",
+      "options": {
+        "fence": "~~~~"
+      },
+      "expected": "~~~~html\n<h1>x</h1>\n\n~~~~"
+    },
+    {
+      "name": "highlight language pattern stops at punctuation",
+      "plugin": "highlightedCodeBlock",
+      "html": "<div class=\"highlight-source-c++\"><pre>a &lt; b</pre></div>",
+      "options": {},
+      "expected": "```c\na < b\n```"
+    },
+    {
+      "name": "highlight allows collapsed leading whitespace",
+      "plugin": "highlightedCodeBlock",
+      "html": "<div class=\"highlight-source-python\"> <pre>print(1)</pre></div>",
+      "options": {},
+      "expected": "```python\nprint(1)\n```"
+    },
+    {
+      "name": "highlight requires immediate first child pre",
+      "plugin": "highlightedCodeBlock",
+      "html": "<div class=\"highlight-source-python\"><span>intro</span><pre>print(1)</pre></div>",
+      "options": {},
+      "expected": "intro\n\nprint(1)"
+    },
+    {
+      "name": "highlight requires matching class",
+      "plugin": "highlightedCodeBlock",
+      "html": "<div class=\"highlight\"><pre>value</pre></div>",
+      "options": {},
+      "expected": "value"
+    },
+    {
+      "name": "highlight fixed fence matches upstream",
+      "plugin": "highlightedCodeBlock",
+      "html": "<div class=\"highlight-source-js\"><pre>```\ncode</pre></div>",
+      "options": {},
+      "expected": "```js\n```\ncode\n```"
+    },
+    {
+      "name": "checkbox states and unchecked attribute false",
+      "plugin": "taskListItems",
+      "html": "<ul><li><input type=\"checkbox\" checked>done</li><li><input type=\"checkbox\">todo</li><li><input type=\"checkbox\" checked=\"false\">present</li></ul>",
+      "options": {},
+      "expected": "*   [x] done\n*   [ ] todo\n*   [x] present"
+    },
+    {
+      "name": "checkboxes inside labels and spans",
+      "plugin": "taskListItems",
+      "html": "<ul><li><label><input type=\"checkbox\" checked>done</label></li><li><span><input type=\"checkbox\">todo</span></li></ul>",
+      "options": {},
+      "expected": "*   [x] done\n*   [ ] todo"
+    },
+    {
+      "name": "aria checkbox with visible content",
+      "plugin": "taskListItems",
+      "html": "<ul><li><span role=\"checkbox\" aria-checked=\"true\">check</span>done</li><li><span role=\"checkbox\" aria-checked=\"false\">check</span>todo</li><li><label><span role=\"checkbox\" aria-checked=\"mixed\">check</span>mixed</label></li></ul>",
+      "options": {},
+      "expected": "*   [x] done\n*   [ ] todo\n*   [ ] mixed"
+    },
+    {
+      "name": "empty aria checkbox is blank upstream",
+      "plugin": "taskListItems",
+      "html": "<ul><li><span role=\"checkbox\" aria-checked=\"true\"></span>done</li></ul>",
+      "options": {},
+      "expected": "*   done"
+    },
+    {
+      "name": "unrelated inputs and unsupported checkbox nesting",
+      "plugin": "taskListItems",
+      "html": "<p><input type=\"checkbox\" checked>outside</p><ul><li><div><input type=\"checkbox\" checked>nested</div></li><li><input type=\"text\" value=\"ignore\">text</li></ul>",
+      "options": {},
+      "expected": "outside\n\n*   nested\n    \n*   text"
+    },
+    {
+      "name": "ordered tasks with custom list options",
+      "plugin": "taskListItems",
+      "html": "<ol start=\"3\"><li><input type=\"checkbox\" checked>third</li></ol><ul><li><input type=\"checkbox\">next</li></ul>",
+      "options": {
+        "bulletListMarker": "-"
+      },
+      "expected": "3.  [x] third\n\n-   [ ] next"
+    },
+    {
+      "name": "headerless table",
+      "plugin": "tables",
+      "html": "<table><tr><td>a</td><td>b</td></tr><tr><td>c</td><td>d</td></tr></table>",
+      "options": {},
+      "expected": "|     |     |\n| --- | --- |\n| a   | b   |\n| c   | d   |"
+    },
+    {
+      "name": "th heading row",
+      "plugin": "tables",
+      "html": "<table><tr><th>one</th><th>two</th></tr><tr><td>alpha</td><td>beta</td></tr></table>",
+      "options": {},
+      "expected": "| one | two |\n| --- | --- |\n| alpha | beta |"
+    },
+    {
+      "name": "thead td heading row",
+      "plugin": "tables",
+      "html": "<table><thead><tr><td>one</td><td>two</td></tr></thead><tbody><tr><td>alpha</td><td>beta</td></tr></tbody></table>",
+      "options": {},
+      "expected": "| one | two |\n| --- | --- |\n| alpha | beta |"
+    },
+    {
+      "name": "empty thead before th heading",
+      "plugin": "tables",
+      "html": "<table><thead></thead><tbody><tr><th>one</th><th>two</th></tr><tr><td>a</td><td>b</td></tr></tbody></table>",
+      "options": {},
+      "expected": "| one | two |\n| --- | --- |\n| a   | b   |"
+    },
+    {
+      "name": "mixed th td first row is not heading",
+      "plugin": "tables",
+      "html": "<table><tr><th>one</th><td>two</td></tr><tr><td>a</td><td>b</td></tr></table>",
+      "options": {},
+      "expected": "|     |     |\n| --- | --- |\n| one | two |\n| a   | b   |"
+    },
+    {
+      "name": "table header only",
+      "plugin": "tables",
+      "html": "<table><tr><th>one</th><th>two</th></tr></table>",
+      "options": {},
+      "expected": "| one | two |\n| --- | --- |"
+    },
+    {
+      "name": "table align attributes and style",
+      "plugin": "tables",
+      "html": "<table><tr><th align=\"LEFT\">left</th><th style=\"text-align: center\">center</th><th align=\"right\">right</th></tr><tr><td>a</td><td>b</td><td>c</td></tr></table>",
+      "options": {},
+      "expected": "| left | center | right |\n| :--- | :---: | ---: |\n| a   | b   | c   |"
+    },
+    {
+      "name": "table alignment voting and ties",
+      "plugin": "tables",
+      "html": "<table><tr><th align=\"left\">one</th><th>two</th></tr><tr><td align=\"right\">a</td><td style=\"text-align: right\">b</td></tr><tr><td align=\"right\">c</td><td style=\"text-align: right\">d</td></tr></table>",
+      "options": {},
+      "expected": "| one | two |\n| ---: | ---: |\n| a   | b   |\n| c   | d   |"
+    },
+    {
+      "name": "headerless alignment",
+      "plugin": "tables",
+      "html": "<table><tr><td align=\"center\">one</td><td style=\"text-align: right\">two</td></tr></table>",
+      "options": {},
+      "expected": "|     |     |\n| :---: | ---: |\n| one | two |"
+    },
+    {
+      "name": "colspan expansion",
+      "plugin": "tables",
+      "html": "<table><tr><th colspan=\"2\">one</th><th>two</th></tr><tr><td>a</td><td>b</td><td>c</td></tr></table>",
+      "options": {},
+      "expected": "| one |     | two |\n| --- |     | --- | --- |\n| a   | b   | c   |"
+    },
+    {
+      "name": "body colspan and short heading",
+      "plugin": "tables",
+      "html": "<table><tr><th>one</th><th>two</th></tr><tr><td colspan=\"2\">a</td><td>b</td><td>c</td></tr></table>",
+      "options": {},
+      "expected": "| one | two |\n| --- | --- | --- |\n| a   |     | b   | c   |"
+    },
+    {
+      "name": "pipes multiline cells and inline formatting",
+      "plugin": "tables",
+      "html": "<table><tr><th>a|b||c</th><th>line</th></tr><tr><td><strong>bold</strong><br>next</td><td><p>first</p><p>second</p></td></tr></table>",
+      "options": {},
+      "expected": "| a\\|b\\|c | line |\n| --- | --- |\n| **bold**  <br>next | first<br><br>second |"
+    },
+    {
+      "name": "caption and colgroup",
+      "plugin": "tables",
+      "html": "<table><caption>A <em>caption</em></caption><colgroup><col style=\"width: 20%\"><col></colgroup><tr><th>one</th><th>two</th></tr><tr><td>a</td><td>b</td></tr></table>",
+      "options": {},
+      "expected": "A caption\n\n|     |     |\n| --- | --- |\n| one | two |\n| a   | b   |"
+    },
+    {
+      "name": "single cell table is flattened",
+      "plugin": "tables",
+      "html": "<p>before</p><table><tr><td><strong>value</strong></td></tr></table><p>after</p>",
+      "options": {},
+      "expected": "before\n\n**value**\n\nafter"
+    },
+    {
+      "name": "single column multiple rows",
+      "plugin": "tables",
+      "html": "<table><tr><td>one</td></tr><tr><td>two</td></tr></table>",
+      "options": {},
+      "expected": "|     |\n| --- |\n| one |\n| two |"
+    },
+    {
+      "name": "empty table",
+      "plugin": "tables",
+      "html": "<p>before</p><table></table><p>after</p>",
+      "options": {},
+      "expected": "before\n\nafter"
+    },
+    {
+      "name": "nested table is flattened by default",
+      "plugin": "tables",
+      "html": "<table><tr><td>outer<table><tr><th>one</th><th>two</th></tr><tr><td>a</td><td>b</td></tr></table></td><td>tail</td></tr></table>",
+      "options": {},
+      "expected": "outer\n\n| one | two |\n| --- | --- |\n| a   | b   |\n\ntail"
+    },
+    {
+      "name": "preserve nested table as wrapped html",
+      "plugin": "tables",
+      "html": "<table><tr><td>outer<table><tr><th>one</th><th>two</th></tr><tr><td>a</td><td>b</td></tr></table></td><td>tail</td></tr></table>",
+      "options": {
+        "preserveNestedTables": true
+      },
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td>outer<table><tbody><tr><th>one</th><th>two</th></tr><tr><td>a</td><td>b</td></tr></tbody></table></td><td>tail</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "table with list preserved as html",
+      "plugin": "tables",
+      "html": "<table><tr><td><ul><li>item</li></ul></td><td>tail</td></tr></table>",
+      "options": {},
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td><ul><li>item</li></ul></td><td>tail</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "table with ordered list preserved as html",
+      "plugin": "tables",
+      "html": "<table><tr><td><ol><li>item</li></ol></td><td>tail</td></tr></table>",
+      "options": {},
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td><ol><li>item</li></ol></td><td>tail</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "table with heading preserved as html",
+      "plugin": "tables",
+      "html": "<table><tr><td><h3>title</h3></td><td>tail</td></tr></table>",
+      "options": {},
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td><h3>title</h3></td><td>tail</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "table with horizontal rule preserved as html",
+      "plugin": "tables",
+      "html": "<table><tr><td>before<hr>after</td><td>tail</td></tr></table>",
+      "options": {},
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td>before<hr>after</td><td>tail</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "table with blockquote preserved as html",
+      "plugin": "tables",
+      "html": "<table><tr><td><blockquote>quote</blockquote></td><td>tail</td></tr></table>",
+      "options": {},
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td><blockquote>quote</blockquote></td><td>tail</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "existing table wrapper is not duplicated",
+      "plugin": "tables",
+      "html": "<div class=\"joplin-table-wrapper\"><table><tr><td><h2>title</h2></td><td>tail</td></tr></table></div>",
+      "options": {},
+      "expected": "<table><tbody><tr><td><h2>title</h2></td><td>tail</td></tr></tbody></table>"
+    },
+    {
+      "name": "nearest nonwrapper div still receives table wrapper",
+      "plugin": "tables",
+      "html": "<div class=\"joplin-table-wrapper\"><div><table><tr><td><h2>title</h2></td><td>tail</td></tr></table></div></div>",
+      "options": {},
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td><h2>title</h2></td><td>tail</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "custom table styles convert by default",
+      "plugin": "tables",
+      "html": "<table style=\"background-color: red\"><tr><td>a</td><td>b</td></tr></table>",
+      "options": {},
+      "expected": "|     |     |\n| --- | --- |\n| a   | b   |"
+    },
+    {
+      "name": "custom table styles preserved",
+      "plugin": "tables",
+      "html": "<table style=\"background-color: red\"><tr><td>a</td><td>b</td></tr></table>",
+      "options": {
+        "preserveTableStyles": true
+      },
+      "expected": "<div class=\"joplin-table-wrapper\"><table style=\"background-color: red\"><tbody><tr><td>a</td><td>b</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "custom row styles preserved",
+      "plugin": "tables",
+      "html": "<table><tr style=\"padding: 2px\"><td>a</td><td>b</td></tr></table>",
+      "options": {
+        "preserveTableStyles": true
+      },
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr style=\"padding: 2px\"><td>a</td><td>b</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "custom cell styles preserved",
+      "plugin": "tables",
+      "html": "<table><tr><td style=\"border: 1px solid red\">a</td><td>b</td></tr></table>",
+      "options": {
+        "preserveTableStyles": true
+      },
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td style=\"border: 1px solid red\">a</td><td>b</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "custom html formatting attributes preserved",
+      "plugin": "tables",
+      "html": "<table><tr><td bgcolor=\"red\">a</td><td>b</td></tr></table>",
+      "options": {
+        "preserveTableStyles": true
+      },
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td bgcolor=\"red\">a</td><td>b</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "nondefault table spacing preserved",
+      "plugin": "tables",
+      "html": "<table cellpadding=\"2\"><tr><td>a</td><td>b</td></tr></table>",
+      "options": {
+        "preserveTableStyles": true
+      },
+      "expected": "<div class=\"joplin-table-wrapper\"><table cellpadding=\"2\"><tbody><tr><td>a</td><td>b</td></tr></tbody></table></div>"
+    },
+    {
+      "name": "default editor styles and spacing still convert",
+      "plugin": "tables",
+      "html": "<table style=\"border-collapse: collapse\" cellpadding=\"0px\" cellspacing=\" 0 \"><tr><td style=\"width: 50%; height: 20px; text-align: center\">a</td><td width=\"50%\">b</td></tr></table>",
+      "options": {
+        "preserveTableStyles": true
+      },
+      "expected": "|     |     |\n| :---: | --- |\n| a   | b   |"
+    },
+    {
+      "name": "code table uses ordinary turndown without hook",
+      "plugin": "tables",
+      "html": "<table><tr><th>code</th><th>value</th></tr><tr><td><pre><code>alpha\nbeta</code></pre></td><td>tail</td></tr></table>",
+      "options": {},
+      "expected": "| code | value |\n| --- | --- |\n| alpha<br>    beta | tail |"
+    },
+    {
+      "name": "isCodeBlock hook preserves code table html",
+      "plugin": "tables",
+      "html": "<table><tr><td><pre><code>alpha\nbeta</code></pre></td><td>tail</td></tr></table>",
+      "options": {},
+      "isCodeBlock": true,
+      "expected": "<div class=\"joplin-table-wrapper\"><table><tbody><tr><td><pre><code>alpha\nbeta</code></pre></td><td>tail</td></tr></tbody></table></div>"
+    }
+  ]
+}

@@ -11,6 +11,7 @@
 Lexidown brings [Turndown](https://github.com/mixmark-io/turndown)'s conversion
 behavior, options, and extensible service API to Python. Its Cython conversion
 engine and bundled Lexbor C parser require no runtime dependencies.
+Joplin's GitHub Flavored Markdown (GFM) rules are included as an optional preset.
 
 ## Performance
 
@@ -76,6 +77,26 @@ After installing Lexidown, run it from the project directory:
 ```sh
 python examples/formatting.py
 ```
+
+## Bundled plugins
+
+Two presets are included in the normal installation:
+
+```python
+from lexidown import TurndownService
+from lexidown.plugins.firecrawl import firecrawl
+from lexidown.plugins.joplin_gfm import gfm
+
+service = TurndownService().use(gfm)  # or .use(firecrawl)
+```
+
+| Plugin | Provides |
+| --- | --- |
+| `gfm` | Tables, task lists, strikethrough and highlighted code blocks |
+| `firecrawl` | GFM plus Firecrawl-style inline links |
+
+See [GFM compatibility and table options](DEVELOPMENT.md#joplin-gfm-compatibility)
+for details.
 
 ## Options
 

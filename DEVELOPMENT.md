@@ -63,10 +63,72 @@ npm ci
 python scripts/differential.py
 ```
 
-`package-lock.json` pins Turndown 7.2.4 and Domino 2.2.0. The differential suite
-compares outputs for option combinations, Unicode, malformed HTML, kept HTML,
+`package-lock.json` pins Turndown 7.2.4, Domino 2.2.0, and
+`@joplin/turndown-plugin-gfm` 1.0.68. `tests/fixtures/joplin_gfm.json` records
+outputs from the published npm plugin, with its source hash and reference
+versions; `tests/test_gfm.py` checks them without Node.js. The live differential
+suite runs these cases through the pinned JavaScript plugin as well.
+The differential suite compares outputs for option combinations, Unicode,
+malformed HTML, kept HTML,
 plugins, and repeated conversions. Updating the compatibility target requires
 reviewing the fixtures and differential results along with parser changes.
+
+### Joplin GFM compatibility
+
+The bundled `lexidown.plugins.joplin_gfm` module ports the published
+`@joplin/turndown-plugin-gfm` 1.0.68 package. Its 50 recorded fixtures cover the
+individual plugins and the combined preset. Tests also check repeated
+conversions, independent services and unchanged DOM inputs.
+
+Tables support headerless input, alignment, captions, multiline cells and
+`colspan`. A one-cell table loses its table formatting; outer layout tables are
+unwrapped by default. Tables containing lists, headings, rules or blockquotes
+stay HTML. Two service options control additional HTML preservation:
+
+```python
+from lexidown import TurndownService
+from lexidown.plugins.joplin_gfm import gfm
+
+service = TurndownService(
+    {
+        "preserveNestedTables": True,
+        "preserveTableStyles": True,
+    }
+).use(gfm)
+```
+
+Both options default to false. `preserveTableStyles` retains custom table, row
+and cell formatting; ordinary width, height, border-collapse and text-align
+styles still allow Markdown conversion. Preserved tables receive Joplin's
+`joplin-table-wrapper` div unless already inside one.
+
+For normal GFM conversion, `TurndownService().use(gfm)` is sufficient, including
+ordinary `<pre><code>` blocks. No callback is required.
+
+The `isCodeBlock(node)` callback below is optional: it keeps an entire table as
+HTML when it contains a code block. Joplin's separate core fork supplies this
+hook; standard Turndown does not. Set it before applying the plugin only when
+you want this additional table preservation:
+
+```python
+service = TurndownService()
+service.isCodeBlock = lambda node: (
+    node.nodeName == "PRE"
+    and node.firstChild is not None
+    and node.firstChild.nodeName == "CODE"
+)
+service.use(gfm)
+```
+
+The port retains upstream output quirks, including collapsing consecutive pipes
+in cells and counting physical cells when constructing headers with `colspan`.
+It keeps options isolated between services and limits each cell's span expansion
+to 1,000 columns to prevent unbounded allocation from an HTML attribute.
+
+Future presets can live alongside this module. Packaging extras such as
+`lexidown[xyz]` are useful when a preset needs optional third-party dependencies;
+they do not selectively install modules from a wheel. The bundled GFM preset
+has no such dependencies, so it needs no extra.
 
 ## Benchmarks
 

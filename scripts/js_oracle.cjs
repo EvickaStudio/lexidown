@@ -5,6 +5,13 @@ const domino = require('@mixmark-io/domino')
 
 function convert (request) {
   const service = new TurndownService(request.options)
+  if (request.plugin) {
+    if (request.isCodeBlock) {
+      service.isCodeBlock = node => node.nodeName === 'PRE' &&
+        node.firstChild && node.firstChild.nodeName === 'CODE'
+    }
+    service.use(require('@joplin/turndown-plugin-gfm')[request.plugin])
+  }
   if (request.keep) service.keep(request.keep)
   if (request.remove) service.remove(request.remove)
   if (request.strikethrough) {

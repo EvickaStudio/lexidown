@@ -20,6 +20,23 @@ also retained in that file from the earlier parser implementation. html5lib is
 now a development dependency used to construct test inputs; its Python package
 is not bundled or used to parse strings at runtime.
 
+## Joplin Turndown GFM plugin — MIT
+
+`src/lexidown/plugins/joplin_gfm.py` translates the published
+[`@joplin/turndown-plugin-gfm` 1.0.68 npm archive](https://registry.npmjs.org/@joplin/turndown-plugin-gfm/-/turndown-plugin-gfm-1.0.68.tgz),
+specifically `lib/turndown-plugin-gfm.cjs.js`, copyright 2017 Dom Christie.
+The archive's MIT copyright, permission and warranty text is retained in
+[LICENSE](LICENSE). The reference package is used only for development;
+JavaScript is not bundled or required at runtime.
+
+Archive integrity (SHA-512, base64):
+`m8DfAQNC/V7g0j5H6Jv60WhekBBjodD+zTPGrU+g2m+ux/z8ZX07KQIl6kaAmbKwfvsQhC04op52g63I78sVgg==`.
+The source SHA-256 and oracle versions are also recorded in
+`tests/fixtures/joplin_gfm.json`. These fixtures were produced by running the
+published plugin against Turndown 7.2.4 and Domino 2.2.0. The Python translation
+uses the existing native DOM, isolates options per service, and caps colspan
+expansion at 1,000 columns.
+
 ## Lexbor — Apache-2.0, with BSD-2-Clause portions
 
 [Lexbor](https://github.com/lexbor/lexbor) 3.1.0 is bundled as C source and

@@ -15,26 +15,85 @@ Joplin's GitHub Flavored Markdown (GFM) rules are included as an optional preset
 
 ## Performance
 
-Current source build, default settings, eight complete HTML pages, CPython 3.14.7
-and Node.js 22.23.2 on an Intel Core i7-1260P. Measured on 10 September 2026:
+Across eight complete HTML pages, Lexidown was **4.29× faster than JavaScript
+Turndown on the Linux laptop** and **3.13× faster on the Windows desktop**, with
+identical output. These are geometric means for this corpus. Lexidown's absolute
+conversion times were lower on the desktop for every page.
 
-| Converter | Implementation | Speed vs JS Turndown | Exact JS output |
-| --- | --- | ---: | ---: |
-| JavaScript Turndown | JavaScript + Domino | 1.00× | 8/8 |
-| **Lexidown** | **Cython + Lexbor** | **4.29×** | **8/8** |
-| [html2text](https://pypi.org/project/html2text/) | Python | 1.17× | 0/8 |
-| [markdownify](https://pypi.org/project/markdownify/) | Python + BeautifulSoup | 0.63× | 0/8 |
-| [html-to-markdown](https://pypi.org/project/html-to-markdown/) | Rust | 4.52× | 0/8 |
-| [fast-h2m](https://pypi.org/project/fast-h2m/) | Rust | 3.75× | 0/8 |
+<details>
+<summary>Benchmark tables and timings: Linux laptop (Intel Core i7-1260P) vs Windows desktop (AMD Ryzen 7 9700X)</summary>
 
-Speed is the geometric mean of JavaScript time divided by converter time;
-above 1 means faster. Each page has 21 timed conversions across three fresh
-processes. Results depend on the input, and different output is not a quality
-score. The corpus focuses on large, complete pages (about 240 KiB–2 MiB of HTML),
-rather than small HTML snippets. Speedups vary with page structure, enabled
-plugins, CPU, operating system, power settings, and background load. See the
-[full comparison](benchmarks/COMPARISON.md) for per-page timings, versions,
-methodology, and additional configurations.
+### Machines and method
+
+| | Linux laptop | Windows desktop |
+| --- | --- | --- |
+| CPU | Intel Core i7-1260P | AMD Ryzen 7 9700X |
+| OS | Arch Linux, kernel 7.2.3, glibc 2.44 | Windows 11 Pro, build 26200 |
+| Python / Node.js | CPython 3.14.7 / Node.js 22.23.2 | CPython 3.14.7 / Node.js 22.23.2 |
+| Timed samples per page/converter | 21 across 3 fresh-process rounds | 42 across 6 fresh-process rounds (two complete passes) |
+
+Measured on 10 September 2026 using the same source build inputs, saved HTML
+snapshots, converter versions, and default settings. Each round uses five warmups
+and seven measured conversions per page/converter. Conversions run serially;
+timing includes service construction, parsing, and Markdown conversion, while
+excluding process startup, file reads, and output hashing. Desktop medians pool
+both complete passes; no samples were discarded.
+
+**The CPU, OS, and build environment differ, so these results cannot isolate an
+OS effect.** The desktop ran Lexidown **1.26× faster** and JavaScript **1.72×
+faster** overall. JavaScript's larger improvement explains why Lexidown's lead
+over JavaScript fell from 4.29× to 3.13× even though Lexidown itself ran faster.
+These measurements do not establish whether the laptop thermally throttled.
+
+### Converter comparison
+
+All speed ratios are geometric means across the eight pages. "Vs JS" compares
+with JavaScript on the **same machine**. "Desktop vs laptop" is laptop time
+divided by desktop time; above 1 means the desktop was faster overall. Individual
+pages can behave differently. Exact JS output counts apply to both machines.
+
+| Converter | Linux laptop vs JS | Windows desktop vs JS | Desktop vs laptop | Exact JS output |
+| --- | ---: | ---: | ---: | ---: |
+| JavaScript Turndown | 1.00× | 1.00× | 1.72× | 8/8 |
+| **Lexidown** | **4.29×** | **3.13×** | **1.26×** | **8/8** |
+| [html2text](https://pypi.org/project/html2text/) | 1.17× | 0.84× | 1.24× | 0/8 |
+| [markdownify](https://pypi.org/project/markdownify/) | 0.63× | 0.53× | 1.45× | 0/8 |
+| markdownify + lxml | 0.81× | 0.64× | 1.38× | 0/8 |
+| [html-to-markdown](https://pypi.org/project/html-to-markdown/) | 4.52× | 3.25× | 1.24× | 0/8 |
+| html-to-markdown, no metadata | 4.71× | 3.37× | 1.23× | 0/8 |
+| [fast-h2m](https://pypi.org/project/fast-h2m/) | 3.75× | 2.51× | 1.15× | 0/8 |
+
+The converters produce different Markdown; speed and exact-match counts are not
+quality scores. markdownify + lxml also produced slightly different output
+between machines on the MDN page; the desktop report records that difference.
+
+### Absolute conversion times
+
+Median milliseconds per complete page; **lower is faster**. Laptop means
+Linux/i7-1260P; desktop means Windows/Ryzen 7 9700X.
+
+| Page | Laptop Lexidown | Desktop Lexidown | Laptop JS | Desktop JS |
+| --- | ---: | ---: | ---: | ---: |
+| python-functions | 29.66 | 21.53 | 65.18 | 45.55 |
+| whatwg-parsing | 73.94 | 53.82 | 194.63 | 114.31 |
+| wikipedia-world-war-ii | 79.87 | 65.99 | 214.48 | 144.49 |
+| mdn-array | 9.31 | 7.49 | 20.51 | 14.01 |
+| github-cpython | 8.13 | 6.74 | 27.85 | 18.07 |
+| guardian-world | 9.71 | 8.56 | 32.51 | 19.77 |
+| gutenberg-pride-prejudice | 25.66 | 21.77 | 552.99 | 244.26 |
+| rust-book | 184.34 | 136.45 | 2497.99 | 977.48 |
+
+For example, the Rust book took Lexidown 184.34 ms on the laptop and 136.45 ms on
+the desktop. JavaScript improved from 2497.99 ms to 977.48 ms on the same input.
+
+The corpus focuses on large, complete pages (about 240 KiB–2 MiB of HTML),
+rather than small snippets. Results depend on page structure, enabled plugins,
+CPU, OS, power settings, and background load. Full timings for all converters,
+versions, methodology, and raw samples are in the
+[Linux laptop report](benchmarks/COMPARISON.md) and
+[Windows desktop comparison](benchmarks/COMPARISON.md#windows-desktop-comparison).
+
+</details>
 
 Lexidown also matches Turndown byte for byte across all **104 page/option
 combinations** in the [compatibility benchmark](benchmarks/REPORT.md).

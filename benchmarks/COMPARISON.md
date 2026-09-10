@@ -1,6 +1,6 @@
 # HTML-to-Markdown converter comparison
 
-Run: 2026-09-10T07:53:52.378169+00:00 to 2026-09-10T08:00:34.214863+00:00.
+Linux laptop run: 2026-09-10T07:53:52.378169+00:00 to 2026-09-10T08:00:34.214863+00:00.
 
 All converters receive the same complete HTML. Their defaults produce different Markdown and may retain different content; timing is not a quality or equivalence score.
 
@@ -70,3 +70,95 @@ PYTHONPATH=src python -m scripts.compare_converters --rounds 3 --samples 7 --war
 ```
 
 Install the comparison-only dependencies documented in DEVELOPMENT.md first. Snapshots are excluded from version control; sources.json records URLs and hashes. A fresh download may change the corpus and requires new hashes.
+
+## Windows desktop comparison
+
+Measured on 10 September 2026 on an AMD Ryzen 7 9700X (8 cores / 16 logical CPUs,
+32 GB RAM), Windows 11 Pro build 26200, CPython 3.14.7 and Node.js 22.23.2.
+The native extension was built with MSVC 14.44.35207 and the existing `/O2`
+setting. The existing ChrisTitus Ultimate Power Plan was retained.
+
+Two complete passes used the same harness and converter versions as the Linux
+laptop. Each pass ran three fresh-process rounds, five warmups and seven timed
+conversions per page/converter. The desktop medians below pool all **42 samples**;
+the laptop has 21. No samples were discarded. Timing boundaries and normal
+garbage collection are the same as described above.
+
+| Pass | Start (UTC) | Finish (UTC) |
+| --- | --- | --- |
+| 1 | 2026-09-10T08:34:40.637640+00:00 | 2026-09-10T08:39:14.273092+00:00 |
+| 2 | 2026-09-10T08:39:14.509928+00:00 | 2026-09-10T08:43:45.960425+00:00 |
+
+### Desktop median conversion time
+
+Milliseconds; lower is faster.
+
+| Page | Turndown JS | Lexidown | html2text | markdownify | markdownify + lxml | html-to-markdown | html-to-markdown, no metadata | fast-h2m |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| [python-functions](https://docs.python.org/3/library/functions.html) | 45.55 | 21.53 | 62.68 | 127.64 | 108.29 | 17.01 | 16.37 | 23.80 |
+| [whatwg-parsing](https://html.spec.whatwg.org/multipage/parsing.html) | 114.31 | 53.82 | 133.09 | 350.65 | 228.51 | 37.36 | 34.89 | 47.07 |
+| [wikipedia-world-war-ii](https://en.wikipedia.org/wiki/World_War_II) | 144.49 | 65.99 | 191.50 | 386.17 | 332.36 | 76.89 | 70.80 | 149.59 |
+| [mdn-array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) | 14.01 | 7.49 | 28.08 | 49.76 | 41.91 | 7.12 | 6.94 | 8.92 |
+| [github-cpython](https://github.com/python/cpython) | 18.07 | 6.74 | 23.02 | 52.17 | 44.86 | 16.42 | 16.05 | 18.37 |
+| [guardian-world](https://www.theguardian.com/world) | 19.77 | 8.56 | 29.79 | 49.68 | 41.67 | 16.10 | 15.84 | 18.49 |
+| [gutenberg-pride-prejudice](https://www.gutenberg.org/files/1342/1342-h/1342-h.htm) | 244.26 | 21.77 | 158.11 | 117.49 | 102.34 | 10.94 | 10.69 | 12.52 |
+| [rust-book](https://doc.rust-lang.org/book/print.html) | 977.48 | 136.45 | 717.37 | 563.01 | 459.59 | 71.55 | 70.85 | 89.18 |
+
+### Relative performance
+
+Ratios are geometric means across the eight pages. Vs JS compares converters
+on the same machine. Desktop vs laptop is laptop time divided by desktop time;
+above 1 means the desktop was faster. Exact-match counts apply to both machines.
+
+| Converter | Laptop vs JS | Desktop vs JS | Desktop vs laptop | Exact JS matches |
+| --- | ---: | ---: | ---: | ---: |
+| Turndown JS | 1.00x | 1.00x | 1.72x | 8/8 |
+| Lexidown | 4.29x | 3.13x | 1.26x | 8/8 |
+| html2text | 1.17x | 0.84x | 1.24x | 0/8 |
+| markdownify | 0.63x | 0.53x | 1.45x | 0/8 |
+| markdownify + lxml | 0.81x | 0.64x | 1.38x | 0/8 |
+| html-to-markdown | 4.52x | 3.25x | 1.24x | 0/8 |
+| html-to-markdown, no metadata | 4.71x | 3.37x | 1.23x | 0/8 |
+| fast-h2m | 3.75x | 2.51x | 1.15x | 0/8 |
+
+Lexidown ran faster on the desktop on every page. Its geometric-mean conversion
+time changed by -1.1% between desktop passes; the largest absolute per-page
+median change was 4.6%. JavaScript improved more than Lexidown between machines,
+which explains Lexidown's smaller relative lead on Windows.
+
+### Output and comparability
+
+Both desktop passes verified unchanged recorded source, input and binary hashes
+at completion. Their 362 recorded source hashes and all eight HTML snapshots
+match the laptop after normalizing path separators. This covers the harness
+manifest, not every repository file. The saved Windows test logs report 375 unit
+tests and 21,475 JavaScript differential cases passing before timing.
+
+All measured output was stable. Lexidown matched JavaScript byte for byte on
+every page in both desktop passes and on the laptop. The only output difference
+between machines was markdownify + lxml on MDN: 75,602 UTF-8 bytes on Windows
+versus 75,597 on Linux. That timing pair therefore measures slightly different
+output; the cause was not established. The raw results retain both output hashes.
+
+CPU, OS, native compiler/dependency builds and Python distribution differ.
+The desktop used uv's standalone Python distribution. Temperature and throttling
+sensors were not recorded, so these measurements cannot isolate an OS effect or
+establish whether the laptop thermally throttled.
+
+### Data and reproduction
+
+[comparison-results.json](comparison-results.json) retains the original laptop
+report at the root and both complete desktop reports in `windows_desktop.runs`.
+Each report includes raw samples, separate round measurements, execution order,
+versions, worker identities, output hashes and recorded source/binary hashes.
+Desktop hardware and build details are in `windows_desktop.hardware`.
+
+Each desktop pass ran this existing command in a temporary source snapshot
+outside Nextcloud, with the built package available and the pinned Node on PATH:
+
+```powershell
+python -m scripts.compare_converters --rounds 3 --samples 7 --warmups 5 --seed 20260909
+```
+
+The harness writes a single run to the standard report paths. Save each result
+before starting another pass; the desktop values here pool both passes.

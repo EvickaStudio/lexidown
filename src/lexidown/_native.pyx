@@ -2,9 +2,13 @@
 """Compiled Turndown engine: one native DOM for strings, DOM input and callbacks."""
 
 from inspect import Parameter, signature
+from cpython.unicode cimport PyUnicode_New, PyUnicode_WRITE
 from ._lexbor cimport *
 
 import re
+
+cdef extern from "Python.h":
+    unsigned int PyUnicode_MAX_CHAR_VALUE(object string)
 
 # ECMAScript's \s differs from Python's for NEL and several control characters.
 JS_WS = "\t\n\v\f\r \u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff"
@@ -134,8 +138,6 @@ def has_meaningful_when_blank(node):
     return _has(node, MEANINGFUL_WHEN_BLANK_ELEMENTS) if cached is None else cached
 
 
-_MARKDOWN_CHARACTERS = str.maketrans({char: "\\" + char for char in "\\*`[]_"})
-_MARKDOWN_ESCAPE = re.compile(r"[\\*`\[\]_]")
 _MARKDOWN_START = re.compile(r"^(?:-|\+ |[=]+|#{1,6} |~~~|>)")
 _ORDERED_LIST_START = re.compile(r"^([0-9]+)\. ")
 
@@ -145,10 +147,32 @@ def _escape_start(match):
 
 
 cpdef str escape_markdown(str string):
+    cdef Py_ssize_t length, index, extra = 0, output = 0
+    cdef int kind
+    cdef unsigned int character
+    cdef void *data
+    cdef void *target
+    cdef str escaped
     if not string:
         return string
-    if _MARKDOWN_ESCAPE.search(string):
-        string = string.translate(_MARKDOWN_CHARACTERS)
+    length = PyUnicode_GET_LENGTH(string)
+    kind = PyUnicode_KIND(string)
+    data = PyUnicode_DATA(string)
+    for index in range(length):
+        character = PyUnicode_READ(kind, data, index)
+        if character in (92, 42, 96, 91, 93, 95):
+            extra += 1
+    if extra:
+        escaped = PyUnicode_New(length + extra, PyUnicode_MAX_CHAR_VALUE(string))
+        target = PyUnicode_DATA(escaped)
+        for index in range(length):
+            character = PyUnicode_READ(kind, data, index)
+            if character in (92, 42, 96, 91, 93, 95):
+                PyUnicode_WRITE(kind, target, output, 92)
+                output += 1
+            PyUnicode_WRITE(kind, target, output, character)
+            output += 1
+        string = escaped
     if string[0] in "-+=#~>":
         return _MARKDOWN_START.sub(_escape_start, string, count=1)
     if "0" <= string[0] <= "9":

@@ -15,23 +15,26 @@ Joplin's GitHub Flavored Markdown (GFM) rules are included as an optional preset
 
 ## Performance
 
-Default settings, eight complete HTML pages, CPython 3.14.7 and Node.js 22.23.2
-on an Intel Core i7-1260P:
+Current source build, default settings, eight complete HTML pages, CPython 3.14.7
+and Node.js 22.23.2 on an Intel Core i7-1260P. Measured on 10 September 2026:
 
 | Converter | Implementation | Speed vs JS Turndown | Exact JS output |
 | --- | --- | ---: | ---: |
 | JavaScript Turndown | JavaScript + Domino | 1.00× | 8/8 |
-| **Lexidown** | **Cython + Lexbor** | **2.94×** | **8/8** |
-| [html2text](https://pypi.org/project/html2text/) | Python | 1.16× | 0/8 |
-| [markdownify](https://pypi.org/project/markdownify/) | Python + BeautifulSoup | 0.61× | 0/8 |
-| [html-to-markdown](https://pypi.org/project/html-to-markdown/) | Rust | 4.46× | 0/8 |
-| [fast-h2m](https://pypi.org/project/fast-h2m/) | Rust | 3.72× | 0/8 |
+| **Lexidown** | **Cython + Lexbor** | **4.29×** | **8/8** |
+| [html2text](https://pypi.org/project/html2text/) | Python | 1.17× | 0/8 |
+| [markdownify](https://pypi.org/project/markdownify/) | Python + BeautifulSoup | 0.63× | 0/8 |
+| [html-to-markdown](https://pypi.org/project/html-to-markdown/) | Rust | 4.52× | 0/8 |
+| [fast-h2m](https://pypi.org/project/fast-h2m/) | Rust | 3.75× | 0/8 |
 
 Speed is the geometric mean of JavaScript time divided by converter time;
 above 1 means faster. Each page has 21 timed conversions across three fresh
 processes. Results depend on the input, and different output is not a quality
-score. See the [full comparison](benchmarks/COMPARISON.md) for per-page timings,
-versions, methodology, and additional configurations.
+score. The corpus focuses on large, complete pages (about 240 KiB–2 MiB of HTML),
+rather than small HTML snippets. Speedups vary with page structure, enabled
+plugins, CPU, operating system, power settings, and background load. See the
+[full comparison](benchmarks/COMPARISON.md) for per-page timings, versions,
+methodology, and additional configurations.
 
 Lexidown also matches Turndown byte for byte across all **104 page/option
 combinations** in the [compatibility benchmark](benchmarks/REPORT.md).

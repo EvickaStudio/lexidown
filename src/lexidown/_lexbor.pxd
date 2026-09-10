@@ -27,6 +27,7 @@ cdef extern from "lexbor/html/html.h" nogil:
         lxb_dom_document_t dom_document
     ctypedef struct lxb_dom_element_t:
         lxb_dom_node_t node
+        uintptr_t qualified_name
         lxb_dom_attr_t *first_attr
     ctypedef struct lxb_dom_attr_t:
         lxb_dom_node_t node
@@ -96,6 +97,8 @@ cdef extern from "lexbor/ns/ns.h" nogil:
 cdef extern from "lexbor/tag/tag.h" nogil:
     enum:
         LXB_TAG_TEMPLATE
+        LXB_TAG__LAST_ENTRY
+    const lxb_char_t *lxb_tag_name_by_id(uintptr_t, size_t *)
 
 cdef extern from *:
     """

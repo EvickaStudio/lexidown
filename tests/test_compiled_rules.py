@@ -4,9 +4,25 @@ import unittest
 from functools import partial
 
 from lexidown import TurndownService
+from lexidown._native import _utf16_length
 
 
 class CompiledRuleCallbacks(unittest.TestCase):
+    def test_utf16_length_for_each_unicode_storage_width(self):
+        for text in (
+            "",
+            "ASCII",
+            "caf\u00e9",
+            "\u1234",
+            "\ud800",
+            "x\U0001f600\U0010ffff",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(
+                    _utf16_length(text),
+                    len(text.encode("utf-16-le", "surrogatepass")) // 2,
+                )
+
     def test_callable_plugin_bound_filter_and_partial_replacement(self):
         class Plugin:
             def filter(self, node, options):
@@ -29,7 +45,7 @@ class CompiledRuleCallbacks(unittest.TestCase):
 
         class Replacement:
             def __call__(self, content):
-                return "(" + content + ")"
+                return f"({content})"
 
         service.addRule(
             "callable-replacement",

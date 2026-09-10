@@ -142,7 +142,7 @@ python examples/formatting.py
 
 ## Bundled plugins
 
-Two presets are included in the normal installation:
+Three presets are included in the normal installation:
 
 ```python
 from lexidown import TurndownService
@@ -156,6 +156,7 @@ service = TurndownService().use(gfm)  # or .use(firecrawl)
 | --- | --- |
 | `gfm` | Tables, task lists, strikethrough and highlighted code blocks |
 | `firecrawl` | GFM plus Firecrawl-style inline links |
+| `llm` | Main-content cleanup, GFM, ATX headings and fenced code for scraped pages. See Example: [examples/llm.py](examples/llm.py) |
 
 See [GFM compatibility and table options](DEVELOPMENT.md#joplin-gfm-compatibility)
 for details.

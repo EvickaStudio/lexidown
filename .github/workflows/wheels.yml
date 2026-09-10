@@ -69,7 +69,7 @@ jobs:
       - name: Test the installed wheel outside the checkout
         run: |
           mkdir -p "$RUNNER_TEMP/wheel-tests/scripts"
-          cp -R tests "$RUNNER_TEMP/wheel-tests/"
+          cp -R tests examples "$RUNNER_TEMP/wheel-tests/"
           cp scripts/check_wheel.py scripts/benchmark.py scripts/compare_converters.py scripts/prepare_release.py "$RUNNER_TEMP/wheel-tests/scripts/"
           cd "$RUNNER_TEMP/wheel-tests"
           python -m scripts.check_wheel
@@ -103,7 +103,7 @@ jobs:
       CIBW_MUSLLINUX_AARCH64_IMAGE: musllinux_1_2
       CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=11.0
       # Only tests and their helpers are copied; imports must use the installed wheel.
-      CIBW_TEST_SOURCES: tests scripts/check_wheel.py scripts/benchmark.py scripts/compare_converters.py scripts/prepare_release.py
+      CIBW_TEST_SOURCES: tests examples scripts/check_wheel.py scripts/benchmark.py scripts/compare_converters.py scripts/prepare_release.py
       CIBW_TEST_REQUIRES: html5lib==1.1
       CIBW_TEST_COMMAND: python -m scripts.check_wheel
     steps:

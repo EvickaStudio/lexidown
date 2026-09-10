@@ -652,6 +652,9 @@ cpdef Node root_node(input, options):
             raise TypeError("Cannot read properties of null (reading 'firstChild')")
     else:
         root = _import_dom(_Document(), input, True)
+    preprocess = _option(options, "preprocess")
+    if preprocess is not None:
+        preprocess(root)
     collapse_whitespace(root, bool(_option(options, "preformattedCode")))
     _cache_blankness(root)
     return root

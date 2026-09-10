@@ -30,6 +30,8 @@ cpdef Py_ssize_t _utf16_length(str value):
     cdef Py_ssize_t index
     cdef int kind = PyUnicode_KIND(value)
     cdef void* data = PyUnicode_DATA(value)
+    if kind < 4:
+        return length
     for index in range(length):
         if PyUnicode_READ(kind, data, index) > 0xffff:
             result += 1

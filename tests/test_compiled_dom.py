@@ -35,6 +35,30 @@ class CompiledDOM(unittest.TestCase):
         self.assertEqual(len(imported.childNodes), 2)
         self.assertEqual(imported.textContent, "changed-")
 
+    def test_unchanged_text_setters_preserve_cached_metadata(self):
+        root = root_node("<p>unchanged</p>", {})
+        text = root.firstChild.firstChild
+        index = root._text_index
+        for attribute in ("nodeValue", "data", "textContent"):
+            with self.subTest(attribute=attribute):
+                setattr(text, attribute, "unchanged")
+                self.assertTrue(text._metadata_valid)
+                self.assertTrue(root._metadata_valid)
+                self.assertIs(root._text_index, index)
+        text.data = "changed"
+        self.assertFalse(root._metadata_valid)
+        self.assertEqual(root.textContent, "changed")
+
+    def test_attribute_existence_matches_lookup_with_empty_values(self):
+        root = root_node('<input checked><svg viewBox=""></svg>text', {})
+        checkbox, svg, text = root.childNodes
+        self.assertTrue(checkbox.hasAttribute("CHECKED"))
+        self.assertFalse(checkbox.hasAttribute("missing"))
+        self.assertTrue(svg.hasAttribute("viewBox"))
+        self.assertTrue(svg.hasAttribute("viewbox"))
+        self.assertFalse(svg.hasAttribute("VIEWBOX"))
+        self.assertFalse(text.hasAttribute("checked"))
+
     def test_detached_and_reparented_nodes_retain_their_documents(self):
         source = root_node("<em>retained</em>", {})
         child = source.firstChild

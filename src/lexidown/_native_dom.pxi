@@ -4,8 +4,8 @@ from xml.dom import HierarchyRequestErr, NotFoundErr
 import re
 
 _HTML_NAMESPACE = "http://www.w3.org/1999/xhtml"
+_NODE_NAMES = {3: "#text", 4: "#cdata-section", 8: "#comment", 9: "#document", 11: "#document-fragment"}
 _ASCII_WS = " \t\r\n"
-_COLLAPSIBLE = re.compile(r"[ \r\n\t]+")
 _RAW_TEXT = frozenset(["SCRIPT", "STYLE", "XMP", "IFRAME", "NOEMBED", "NOFRAMES", "PLAINTEXT"])
 _SERIALIZER_VOID = frozenset([
     "area", "base", "basefont", "bgsound", "br", "col", "embed", "frame", "hr",
@@ -17,6 +17,19 @@ cdef inline str _decode(const lxb_char_t *data, size_t length):
     if data == NULL:
         return ""
     return PyUnicode_DecodeUTF8(<const char *>data, length, "surrogatepass")
+
+
+cdef tuple _html_tag_names():
+    cdef size_t tag, length = 0
+    cdef const lxb_char_t *data
+    names = []
+    for tag in range(LXB_TAG__LAST_ENTRY):
+        data = lxb_tag_name_by_id(tag, &length)
+        names.append(_decode(data, length).upper())
+    return tuple(names)
+
+
+cdef tuple _HTML_TAG_NAMES = _html_tag_names()
 
 
 cdef class _Document:
@@ -68,13 +81,20 @@ cdef class Node:
         self.nodeType = node.type
         self.namespaceURI = None
         if node.type == 1:
-            data = lxb_ns_by_id(node.owner_document.ns, node.ns, &length)
-            if length:
-                self.namespaceURI = _decode(data, length)
-            data = lxb_dom_element_qualified_name(<lxb_dom_element_t *>node, &length)
-            self.nodeName = _decode(data, length)
-            if self.namespaceURI in (None, _HTML_NAMESPACE):
-                self.nodeName = self.nodeName.upper()
+            if node.ns == LXB_NS_HTML:
+                self.namespaceURI = _HTML_NAMESPACE
+            else:
+                data = lxb_ns_by_id(node.owner_document.ns, node.ns, &length)
+                if length:
+                    self.namespaceURI = _decode(data, length)
+            if (node.ns == LXB_NS_HTML and node.local_name < LXB_TAG__LAST_ENTRY
+                    and (<lxb_dom_element_t *>node).qualified_name == 0):
+                self.nodeName = _HTML_TAG_NAMES[node.local_name]
+            else:
+                data = lxb_dom_element_qualified_name(<lxb_dom_element_t *>node, &length)
+                self.nodeName = _decode(data, length)
+                if self.namespaceURI in (None, _HTML_NAMESPACE):
+                    self.nodeName = self.nodeName.upper()
         elif node.type == 7:
             data = lxb_dom_processing_instruction_target(<lxb_dom_processing_instruction_t *>node, &length)
             self.nodeName = _decode(data, length)
@@ -82,7 +102,7 @@ cdef class Node:
             data = lxb_dom_document_type_name(<lxb_dom_document_type_t *>node, &length)
             self.nodeName = _decode(data, length)
         else:
-            self.nodeName = {3: "#text", 4: "#cdata-section", 8: "#comment", 9: "#document", 11: "#document-fragment"}.get(node.type, "")
+            self.nodeName = _NODE_NAMES.get(node.type, "")
         document._cache[<uintptr_t>node] = self
         node.user = <void *>self
 
@@ -207,8 +227,11 @@ cdef class Node:
         self._set_data(value)
 
     cdef void _set_data(self, str value) except *:
-        cdef bytes encoded = value.encode("utf-8", "surrogatepass")
+        cdef bytes encoded
         cdef lxb_dom_character_data_t *data = <lxb_dom_character_data_t *>self._node
+        if self._value is not None and self._value == value:
+            return
+        encoded = value.encode("utf-8", "surrogatepass")
         if lxb_dom_character_data_replace(data, <const lxb_char_t *>encoded, len(encoded), 0, data.data.length) != 0:
             raise MemoryError("Cannot replace DOM text")
         self._value = value
@@ -298,11 +321,12 @@ cdef class Node:
 
     cpdef list getElementsByTagName(self, str name):
         cdef Node node
+        cdef str html_name = name.upper()
         result = []
         pending = list(reversed(self.childNodes))
         while pending:
             node = pending.pop()
-            expected = name.upper() if node.namespaceURI in (None, _HTML_NAMESPACE) else name
+            expected = html_name if node.namespaceURI in (None, _HTML_NAMESPACE) else name
             if node.nodeType == 1 and (name == "*" or node.nodeName == expected):
                 result.append(node)
             pending.extend(reversed(node.childNodes))
@@ -725,11 +749,19 @@ def _option(options, name):
 
 
 
+cdef inline bint _js_whitespace(Py_UCS4 char):
+    return (char == 32 or 9 <= char <= 13 or 0x2000 <= char <= 0x200a
+            or char in (0xa0, 0x1680, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000, 0xfeff))
+
+
 def _cache_blankness(Node root):
     cdef Node node, child
     cdef Py_ssize_t offset = 0
-    cdef Py_ssize_t leading_end, trailing_start
+    cdef Py_ssize_t leading_end, trailing_start, length, left, right
     cdef bint blank, has_void, has_meaningful
+    cdef str text
+    cdef int kind
+    cdef void *data
     # One shared string keeps deeply nested markup from storing a copy of each
     # ancestor's text. Offsets also make whitespace boundary checks constant-time.
     text_index = [""]
@@ -744,12 +776,21 @@ def _cache_blankness(Node root):
             if node.nodeType in (3, 4):
                 text = node.nodeValue
                 text_parts.append(text)
-                offset += len(text)
+                length = PyUnicode_GET_LENGTH(text)
+                kind = PyUnicode_KIND(text)
+                data = PyUnicode_DATA(text)
+                left = 0
+                while left < length and _js_whitespace(PyUnicode_READ(kind, data, left)):
+                    left += 1
+                right = length if left < length else 0
+                while right > left and _js_whitespace(PyUnicode_READ(kind, data, right - 1)):
+                    right -= 1
+                offset += length
                 node._text_end = offset
-                node._blank_text = not js_trim(text)
+                node._blank_text = left == length
                 node._has_void = node._has_meaningful = False
-                node._leading_end = offset - len(text.lstrip(JS_WS))
-                node._trailing_start = node._text_start + len(text.rstrip(JS_WS))
+                node._leading_end = node._text_start + left
+                node._trailing_start = node._text_start + right
                 continue
             children = node.childNodes
             if children:
@@ -869,42 +910,81 @@ cpdef flanking_whitespace(Node node, options):
     return {"leading": edges["leading"], "trailing": edges["trailing"]}
 
 
+cpdef str _collapse_text(str text):
+    if text is None:
+        raise TypeError("text must be a string")
+    cdef Py_ssize_t length = PyUnicode_GET_LENGTH(text)
+    cdef Py_ssize_t index, size = 0
+    cdef int kind = PyUnicode_KIND(text)
+    cdef void *data = PyUnicode_DATA(text)
+    cdef Py_UCS4 char, maxchar = 32
+    cdef bint space, previous_space = False, changed = False
+    cdef str result
+    cdef void *output
+    # Count the result before allocating: regex substitution otherwise allocates
+    # a Python substring for every word and whitespace run in long prose.
+    for index in range(length):
+        char = PyUnicode_READ(kind, data, index)
+        space = char == 32 or char == 9 or char == 10 or char == 13
+        if space:
+            changed = changed or previous_space or char != 32
+            if not previous_space:
+                size += 1
+        else:
+            size += 1
+            if char > maxchar:
+                maxchar = char
+        previous_space = space
+    if not changed:
+        return text
+    result = PyUnicode_New(size, maxchar)
+    output = PyUnicode_DATA(result)
+    previous_space = False
+    size = 0
+    for index in range(length):
+        char = PyUnicode_READ(kind, data, index)
+        space = char == 32 or char == 9 or char == 10 or char == 13
+        if not space or not previous_space:
+            PyUnicode_WRITE(PyUnicode_KIND(result), output, size, 32 if space else char)
+            size += 1
+        previous_space = space
+    return result
+
+
+cdef inline bint _whitespace_pre(Node node, bint preformatted_code):
+    name = node.nodeName if type(node) is Node else (<object>node).nodeName
+    return name == "PRE" or (preformatted_code and name == "CODE")
+
+
+cdef Node _next_whitespace_node(Node previous, Node current, bint preformatted_code):
+    if ((previous is not None and previous.parentNode is current)
+            or _whitespace_pre(current, preformatted_code)):
+        return current.nextSibling or current.parentNode
+    return current.firstChild or current.nextSibling or current.parentNode
+
+
+cdef Node _remove_whitespace_node(Node node):
+    cdef Node following = node.nextSibling or node.parentNode
+    cdef Node parent = node.parentNode
+    parent.removeChild(node)
+    return following
+
+
 def collapse_whitespace(Node element, preformatted_code=False):
     """Port of collapse-whitespace by Luc Thevenard (MIT, 2014)."""
-
-    wrapped = isinstance(element, Node)
-
-    def node_name(node):
-        name = node.nodeName
-        return (
-            name
-            if wrapped or node.namespaceURI not in (None, _HTML_NAMESPACE)
-            else name.upper()
-        )
-
-    def is_pre(node):
-        name = node_name(node)
-        return name == "PRE" or (preformatted_code and name == "CODE")
-
-    def next_node(previous, current):
-        if (previous is not None and previous.parentNode is current) or is_pre(current):
-            return current.nextSibling or current.parentNode
-        return current.firstChild or current.nextSibling or current.parentNode
-
-    def remove(node):
-        following = node.nextSibling or node.parentNode
-        node.parentNode.removeChild(node)
-        return following
-
-    if element.firstChild is None or is_pre(element):
+    cdef Node previous_text, previous, node, following
+    cdef str text, name
+    cdef bint keep_leading_ws = False
+    cdef bint preformatted = bool(preformatted_code)
+    if element.firstChild is None or _whitespace_pre(element, preformatted):
         return
     previous_text = None
-    keep_leading_ws = False
     previous = None
-    node = next_node(previous, element)
+    node = _next_whitespace_node(previous, element, preformatted)
     while node is not element:
-        if node.nodeType in (3, 4):
-            text = _COLLAPSIBLE.sub(" ", node.data)
+        node_type = node.nodeType if type(node) is Node else (<object>node).nodeType
+        if node_type in (3, 4):
+            text = _collapse_text(node.data)
             if (
                 (previous_text is None or previous_text.data.endswith(" "))
                 and not keep_leading_ws
@@ -912,28 +992,28 @@ def collapse_whitespace(Node element, preformatted_code=False):
             ):
                 text = text[1:]
             if not text:
-                node = remove(node)
+                node = _remove_whitespace_node(node)
                 continue
             node.data = text
             previous_text = node
-        elif node.nodeType == 1:
-            name = node_name(node)
+        elif node_type == 1:
+            name = node.nodeName if type(node) is Node else (<object>node).nodeName
             if name in BLOCK_ELEMENTS or name == "BR":
                 if previous_text is not None:
                     previous_text.data = previous_text.data.removesuffix(" ")
                 previous_text = None
                 keep_leading_ws = False
-            elif name in VOID_ELEMENTS or is_pre(node):
+            elif name in VOID_ELEMENTS or _whitespace_pre(node, preformatted):
                 previous_text = None
                 keep_leading_ws = True
             elif previous_text is not None:
                 keep_leading_ws = False
         else:
-            node = remove(node)
+            node = _remove_whitespace_node(node)
             continue
-        following = next_node(previous, node)
+        following = _next_whitespace_node(previous, node, preformatted)
         previous, node = node, following
     if previous_text is not None:
         previous_text.data = previous_text.data.removesuffix(" ")
         if not previous_text.data:
-            remove(previous_text)
+            _remove_whitespace_node(previous_text)

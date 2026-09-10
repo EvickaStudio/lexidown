@@ -3,5 +3,5 @@
 from .service import TurndownService
 
 __all__ = ["TurndownService"]
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __turndown_version__ = "7.2.4"

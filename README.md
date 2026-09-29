@@ -1,5 +1,7 @@
 # Lexidown
 
+<img src="assets/lexidown-logo.png" alt="Lexidown logo" width="600">
+
 **Fast native HTML-to-Markdown for Python, compatible with Turndown.**
 
 [![PyPI version](https://badge.fury.io/py/lexidown.svg)](https://badge.fury.io/py/lexidown)

@@ -5,3 +5,4 @@ recursive-include scripts *.py *.cjs
 recursive-include benchmarks *.md *.json *.txt
 recursive-include src/lexidown *.pyx *.pxi *.pxd
 recursive-include vendor/lexbor *.c *.h LICENSE BSD-LICENSE NOTICE version README.md
+prune assets
